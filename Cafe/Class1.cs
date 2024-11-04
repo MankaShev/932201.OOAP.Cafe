@@ -38,15 +38,18 @@ class MainReturnValTest
         int[] choosenDishes;
 
 
-        //controller.Create_Order(); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
+        bool do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
 
-        //С установкой таймера в коде МИ сказала не заморачиваться, поэтому делаем через вызов в main, когда заказ закончит создаваться
-        //kitchen.settimer(); // conroller.dosmth();
-        //чуть позже распишу, надо просто чтобы вы тоже понимали, как у нас детально происходит обработка заказа
-        //1)контроллером 
-        //2)кухней - если непонятно по коду - пишите
+        if (do_order)
+        {
+            //С установкой таймера в коде МИ сказала не заморачиваться, поэтому делаем через вызов в main, когда заказ закончит создаваться
+            //kitchen.settimer(); // conroller.dosmth();
 
+            //чуть позже распишу, надо просто чтобы вы тоже понимали, как у нас детально происходит обработка заказа
+            //1)контроллером 
+            //2)кухней - если непонятно по коду - пишите
 
+        }
 
         //пример реализации интерфейса
         //controller { 
@@ -170,9 +173,33 @@ public class Kitchen
     }
 
 
-    //добавить метод для установки контроллера в уже созданную кухню
+    //добавить метод для установки контроллера в уже созданную кухню !вроде не надо уже!
     //так же отдельно метод для установки загруженности
+    public void SetWorkload(int wl)
+    {
+        Workload = wl;
+    }
+
     //метод для расчета времени заказа после получения списка блюд
+    public int Count_Order_Time(Order order)
+    {
+        int time = 0;
+        foreach (int dish_ID in order.Dish_List)
+        {
+            int t = controller.data.dishes[dish_ID].Time_Of_Cook; //кухня заходит в контроллер, потом через контролер открывает БД, смотрит в списке блюд по ID наше блюдо и возвращает его время готовки
+            time += t;
+        }
+        time += Workload; //прибавляем к общему времени заказа загруженность кухни
+        return time;
+    }
+
+    public void SetOrder(Order order)
+    {
+        Orders_IDs.Append(order.Order_ID);
+        Random random = new Random(Workload);
+        int rn = random.Next(0, 30);
+        Workload += rn;
+    }
 }
 
 //Заказ
@@ -218,21 +245,51 @@ public class Controller
         k = kit;
     }
 
-    //метод на проверку и бронирование стола тут должен быть (если стол занят, то вывести это пользователю)
+    
+
 
     //Формирование заказа
-    public void Create_Order(int Table_Number, int[] dishes_number, int visitor_id)
+    public bool Create_Order(int Table_Number, int[] dishes_number, int visitor_id)
     {
+        //метод на проверку и бронирование стола тут должен быть (если стол занят, то вывести это пользователю)
+        if (!data.Table_Check(Table_Number))
+        {
+            Console.WriteLine("Sorry, table №" + Table_Number+" is booked");
+            return false;
+        }
+
+        //создаём новый заказ
         Order order = new Order(Table_Number, dishes_number, visitor_id);
+        //метод для вычисления итоговой стоимости и вывода её на экран
+        double chek = this.Get_Chek(dishes_number);
+        order.Total_Price = chek;
+        Console.WriteLine("Total Cost of your order = " + chek);
         //потом вызов метода у кухни k{поле объекта} для расчёта времени готовки заказа
-        //метод для внесения в заказа итоговой стоимости и вывода её на экран
-        //мб потверждение от пользователя об оплате (просто написать "да" в консоль)
-        //добавление заказа в data.orders{поле объекта} (БД с заказами)
-        //мб что-то ещё, не знаю, 
+        int t = k.Count_Order_Time(order);
 
+        //Выводим составленный заказ
+        //controller.showOrder(order);
+
+        Console.WriteLine("Time of your order = " + t);
+
+        Console.WriteLine();
+        //потверждение от пользователя об оплате (просто написать "да" в консоль)
+        Console.WriteLine("Do you confirm the order?");
+        Console.WriteLine("\t yes or no");
+        String confirm = Console.ReadLine();
+        if (confirm.ToLower() == "yes")
+        {
+            //метод для отправки заказа на кухню 
+            k.SetOrder(order);
+            //controller.showOrder(order);
+
+            //добавление заказа в data.orders{поле объекта} (БД с заказами)
+            this.data.AddOrder(order);
+
+            return true;
+        }
+        else { return false; }
     }
-
-
     //для подсчёта итогового чека
     public double Get_Chek(int[] dishes_number)
     {
@@ -365,5 +422,13 @@ public class DataBase
             tables.ElementAt(i).show_free_table();
         }
     }
-
+    public void AddOrder(Order order)
+    {
+        orders.Append(order);
+    }
+    //метод на проверку и бронирование стола тут должен быть (если стол занят, то вывести это пользователю)
+    public bool Table_Check(int table_id)
+    {
+        return tables.ElementAt(table_id).Is_Booked;
+    }
 }
