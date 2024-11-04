@@ -500,4 +500,8 @@ public class OrderShow : IShow
             
         }
     }
+    public void Show(int[] orderIds)
+    {
+        // Реализация Show для int[]
+    }
 }
