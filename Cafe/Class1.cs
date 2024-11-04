@@ -38,12 +38,12 @@ class MainReturnValTest
         int[] choosenDishes;
 
 
-        bool do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
+        int do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
 
-        if (do_order)
+        if (do_order!=0)
         {
             //С установкой таймера в коде МИ сказала не заморачиваться, поэтому делаем через вызов в main, когда заказ закончит создаваться
-            //kitchen.settimer(); // conroller.dosmth();
+            //kitchen.SetTimer(do_order); // conroller.dosmth();
 
             //чуть позже распишу, надо просто чтобы вы тоже понимали, как у нас детально происходит обработка заказа
             //1)контроллером 
@@ -91,9 +91,6 @@ public class Dish
         Time_Of_Cook = timeOfCook;
         Is_Available = true;
     }
-
-
-
 }
 
 // Посетитель
@@ -200,12 +197,18 @@ public class Kitchen
         int rn = random.Next(0, 30);
         Workload += rn;
     }
+
+    public void SetTimer(int orID)
+    {
+        controller.data.orders.ElementAt(orID).Is_Ready =true;
+        controller.Order_is_ready(orID);
+    }
 }
 
 //Заказ
 public class Order
 {
-    static int ID = 0; //статичный счётчик для заказов, чтобы у каждого нового заказа был уникальный порядковый номер
+    static int ID = 1; //статичный счётчик для заказов, чтобы у каждого нового заказа был уникальный порядковый номер
     public int Order_ID; //номер заказа
     public int Table_ID; //номер столика
     public int Visitor_ID; //номер посетителя
@@ -244,18 +247,18 @@ public class Controller
     {
         k = kit;
     }
-
+    
     
 
 
     //Формирование заказа
-    public bool Create_Order(int Table_Number, int[] dishes_number, int visitor_id)
+    public int Create_Order(int Table_Number, int[] dishes_number, int visitor_id)
     {
         //метод на проверку и бронирование стола тут должен быть (если стол занят, то вывести это пользователю)
         if (!data.Table_Check(Table_Number))
         {
             Console.WriteLine("Sorry, table №" + Table_Number+" is booked");
-            return false;
+            return 0;
         }
 
         //создаём новый заказ
@@ -286,9 +289,9 @@ public class Controller
             //добавление заказа в data.orders{поле объекта} (БД с заказами)
             this.data.AddOrder(order);
 
-            return true;
+            return order.Order_ID;
         }
-        else { return false; }
+        else { return 0; }
     }
     //для подсчёта итогового чека
     public double Get_Chek(int[] dishes_number)
@@ -300,7 +303,11 @@ public class Controller
         }
         return chek;
     }
-
+    
+    public void Order_is_ready(int order) 
+    {
+        Console.WriteLine("Order №"+ order+" is ready!");
+    }
 
 
 }
@@ -312,7 +319,7 @@ public class DataBase
     Visitor[] visitors = new Visitor[10]; //гости
     public Table[] tables = new Table[10]; //столы
     public Dish[] dishes = new Dish[10]; //блюда
-    Order[] orders = new Order[10]; //заказы
+    public Order[] orders = new Order[10]; //заказы
     int n = 10;
 
     //конструктор для 10 элементов
@@ -348,10 +355,33 @@ public class DataBase
         locations[1] = "outside";
 
         string[] menu_sections = new string[4];
-        menu_sections[0] = "main";
+        menu_sections[0] = "drinks";
         menu_sections[1] = "salads";
         menu_sections[2] = "soups";
         menu_sections[3] = "desserts";
+
+
+
+        // Заполнение массива блюдами
+        dishes[0] = new Dish(1, "caesar", 250.0, "salads", 15);
+        dishes[1] = new Dish(2, "olivier", 200.0, "salads", 10);
+        dishes[2] = new Dish(3, "kharcho soup", 150.0, "soups", 30);
+        dishes[3] = new Dish(4, "borscht", 120.0, "soups", 25);
+        dishes[4] = new Dish(5, "coca-cola", 100.0, "drinks", 0);
+        dishes[5] = new Dish(6, "orange juice", 120.0, "drinks", 0);
+        dishes[6] = new Dish(7, "tiramisu", 220.0, "desserts", 20);
+        dishes[7] = new Dish(8, "napoleon", 180.0, "desserts", 15);
+        dishes[8] = new Dish(9, "greek salad", 240.0, "salads", 10);
+        dishes[9] = new Dish(10, "chicken broth", 140.0, "soups", 40);
+
+        // Для проверки вывода
+        foreach (var dish in dishes)
+            {
+                Console.WriteLine($"{dish.Name} - {dish.Price} руб.");
+            }
+        
+    
+
         #endregion
 
         for (int i = 0; i < 10; i++)
