@@ -7,6 +7,8 @@ class MainReturnValTest
 {
     static int Main()//то с чего начинается программа 
     {
+        IShow inter;
+
         Kitchen kitchen = new Kitchen();//создание кухни с контроллером
         Controller controller = kitchen.controller;//вытаскивание контролера с кухней внутри
         //надо будет ещё в кухню добавить контроллер, т.к. она должна будет его вызывать, когда заказ будет готов
@@ -15,7 +17,7 @@ class MainReturnValTest
         Console.WriteLine("Please sign in or create an account:\n");
 
         //пользователь создаёт себе аккаунт или выбирает из БД в контроллере и помещает в переменную
-        int ourVisitor;
+        int ourVisitor = 2;
 
         Console.WriteLine("Choose your table:\n");
 
@@ -23,27 +25,25 @@ class MainReturnValTest
         controller.data.show_tables();
 
         //пользователь выбирает столик и помещает в переменную
-        int choosenTable;
-
-        //пока не прописала вывод меню (будет через интерфейс сделано) сделала так
-        for (int i = 0; i < 5; i++)
-        {
-            Console.WriteLine("some kind of dish bla bla bla");
-        }
-
-        //controller.show_menu(); (пока не уверена как точно надо реализовать
-
+        int choosenTable = int.Parse(Console.ReadLine());
+        // Присваиваем объект класса Menu
+        inter = new Menu();
+        controller.data.dishes = inter.Sorted(controller.data.dishes);
+        inter.Show(controller.data.dishes);// (пока не уверена как точно надо реализовать
 
         //сюда помещаются выбранные блюда, что выберет пользователь
-        int[] choosenDishes;
+        int[] choosenDishes = new int[] { 2, 5, 8, 1 };
 
 
-        int do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
+        
+        int do_order = 0;
+        do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
 
         if (do_order!=0)
         {
+            
             //С установкой таймера в коде МИ сказала не заморачиваться, поэтому делаем через вызов в main, когда заказ закончит создаваться
-            //kitchen.SetTimer(do_order); // conroller.dosmth();
+            kitchen.SetTimer(do_order); // conroller.dosmth();
 
             //чуть позже распишу, надо просто чтобы вы тоже понимали, как у нас детально происходит обработка заказа
             //1)контроллером 
@@ -181,8 +181,10 @@ public class Kitchen
     public int Count_Order_Time(Order order)
     {
         int time = 0;
-        foreach (int dish_ID in order.Dish_List)
+
+        for (int i = 0; i < order.Dish_List.Length; i++)
         {
+            int dish_ID = order.Dish_List[i];
             int t = controller.data.dishes[dish_ID].Time_Of_Cook; //кухня заходит в контроллер, потом через контролер открывает БД, смотрит в списке блюд по ID наше блюдо и возвращает его время готовки
             time += t;
         }
@@ -232,6 +234,7 @@ public class Order
         Table_ID = table_id;
         Visitor_ID = visitor_id;
         Is_Ready = false;
+        Dish_List= dish_ids;
     }
 
 }
@@ -240,6 +243,7 @@ public class Order
 //Контроллер
 public class Controller
 {
+
     public Kitchen k; //кухня, к которой он привязан
     public DataBase data = new DataBase(); //база данных для контроллера
     //конструктор с кухней
@@ -247,20 +251,16 @@ public class Controller
     {
         k = kit;
     }
-    
-    
-
 
     //Формирование заказа
     public int Create_Order(int Table_Number, int[] dishes_number, int visitor_id)
     {
         //метод на проверку и бронирование стола тут должен быть (если стол занят, то вывести это пользователю)
-        if (!data.Table_Check(Table_Number))
+        if (data.Table_Check(Table_Number))
         {
-            Console.WriteLine("Sorry, table №" + Table_Number+" is booked");
+            Console.WriteLine("Sorry, table №" + Table_Number + " is booked");
             return 0;
         }
-
         //создаём новый заказ
         Order order = new Order(Table_Number, dishes_number, visitor_id);
         //метод для вычисления итоговой стоимости и вывода её на экран
@@ -271,7 +271,7 @@ public class Controller
         int t = k.Count_Order_Time(order);
 
         //Выводим составленный заказ
-        //controller.showOrder(order);
+        
 
         Console.WriteLine("Time of your order = " + t);
 
@@ -291,7 +291,7 @@ public class Controller
 
             return order.Order_ID;
         }
-        else { return 0; }
+        else { return 0;}
     }
     //для подсчёта итогового чека
     public double Get_Chek(int[] dishes_number)
@@ -308,8 +308,6 @@ public class Controller
     {
         Console.WriteLine("Order №"+ order+" is ready!");
     }
-
-
 }
 
 
@@ -454,11 +452,52 @@ public class DataBase
     }
     public void AddOrder(Order order)
     {
-        orders.Append(order);
+        orders[order.Order_ID] = order;
     }
     //метод на проверку и бронирование стола тут должен быть (если стол занят, то вывести это пользователю)
     public bool Table_Check(int table_id)
     {
         return tables.ElementAt(table_id).Is_Booked;
+    }
+}
+public interface IShow
+{
+    Dish[] Sorted(Dish[] dishes);
+    void Show(Dish[] dishes);
+}
+
+public class Menu : IShow
+{
+    public Dish[] Sorted(Dish[] dishes)
+    {
+        Array.Sort(dishes, (d1, d2) => d1.Menu_Sec_ID.CompareTo(d2.Menu_Sec_ID));
+        return dishes;
+    }
+
+    public void Show(Dish[] dishes)
+    {
+        foreach (var dish in dishes)
+        {
+            Console.WriteLine($"ID: {dish.Dish_ID}, Name: {dish.Name}, Price: {dish.Price}, Available: {dish.Is_Available}");
+        }
+    }
+}
+public class OrderShow : IShow
+{
+    public Dish[] Sorted(Dish[] dishes)
+    {
+        // Пример сортировки (по возрастанию)
+        Array.Sort(dishes, (d1, d2) => d1.Menu_Sec_ID.CompareTo(d2.Menu_Sec_ID));
+        return dishes;
+    }
+
+    public void Show(Dish[] dishes)
+    {
+        foreach (var dish in dishes)
+        {
+            
+            Console.WriteLine($"ORDER - ID: {dish.Dish_ID}, Name: {dish.Name}, Price: {dish.Price}");
+            
+        }
     }
 }
