@@ -7,8 +7,8 @@ class MainReturnValTest
 {
     static int Main()//то с чего начинается программа 
     {
-        IShow inter;
 
+        IShow inter;
         Kitchen kitchen = new Kitchen();//создание кухни с контроллером
         Controller controller = kitchen.controller;//вытаскивание контролера с кухней внутри
         //надо будет ещё в кухню добавить контроллер, т.к. она должна будет его вызывать, когда заказ будет готов
@@ -37,7 +37,7 @@ class MainReturnValTest
 
         
         int do_order = 0;
-        do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
+        do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor, inter); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
 
         if (do_order!=0)
         {
@@ -90,6 +90,26 @@ public class Dish
         Menu_Section = menuSection;
         Time_Of_Cook = timeOfCook;
         Is_Available = true;
+        if (menuSection == "drinks") // drinks
+        {
+            Menu_Sec_ID = 3;
+        }
+        else if (menuSection == "salads") // salads
+        {
+            Menu_Sec_ID = 1;
+        }
+        else if (menuSection == "soups") // soups
+        {
+            Menu_Sec_ID = 2;
+        }
+        else if (menuSection == "desserts") // desserts
+        {
+            Menu_Sec_ID = 4;
+        }
+        else
+        {
+            Menu_Sec_ID = -1; // Некорректный раздел меню
+        }
     }
 }
 
@@ -189,7 +209,7 @@ public class Kitchen
             time += t;
         }
         time += Workload; //прибавляем к общему времени заказа загруженность кухни
-        return time;
+        return (int)(time / 3) + 1;
     }
 
     public void SetOrder(Order order)
@@ -253,7 +273,7 @@ public class Controller
     }
 
     //Формирование заказа
-    public int Create_Order(int Table_Number, int[] dishes_number, int visitor_id)
+    public int Create_Order(int Table_Number, int[] dishes_number, int visitor_id, IShow inter)
     {
         //метод на проверку и бронирование стола тут должен быть (если стол занят, то вывести это пользователю)
         if (data.Table_Check(Table_Number))
@@ -263,21 +283,25 @@ public class Controller
         }
         //создаём новый заказ
         Order order = new Order(Table_Number, dishes_number, visitor_id);
+        
+        Dish[] dishes = new Dish[dishes_number.Length];
+        for (int i = 0; i < dishes_number.Length; i++)
+        {
+            dishes[i] = data.dishes[dishes_number[i]];
+        }
+        //Выводим составленный заказ
+        inter = new OrderShow();
+        inter.Sorted(dishes);
+        inter.Show(dishes);
+
+
+
         //метод для вычисления итоговой стоимости и вывода её на экран
         double chek = this.Get_Chek(dishes_number);
         order.Total_Price = chek;
         Console.WriteLine("Total Cost of your order = " + chek);
         //потом вызов метода у кухни k{поле объекта} для расчёта времени готовки заказа
         int t = k.Count_Order_Time(order);
-
-        Dish[] dishes = new Dish[dishes_number.Length];
-        for (int i = 0; i < dishes_number.Length; i++)
-        {
-            dishes[i]=data.dishes[dishes_number[i]];
-        }
-
-         //Выводим составленный заказ
-
 
         Console.WriteLine("Time of your order = " + t);
 
@@ -358,12 +382,7 @@ public class DataBase
         locations[0] = "cafe";
         locations[1] = "outside";
 
-        string[] menu_sections = new string[4];
-        menu_sections[0] = "drinks";
-        menu_sections[1] = "salads";
-        menu_sections[2] = "soups";
-        menu_sections[3] = "desserts";
-
+        
 
 
         // Заполнение массива блюдами
@@ -378,11 +397,7 @@ public class DataBase
         dishes[8] = new Dish(9, "greek salad", 240.0, "salads", 10);
         dishes[9] = new Dish(10, "chicken broth", 140.0, "soups", 40);
 
-        // Для проверки вывода
-        foreach (var dish in dishes)
-            {
-                Console.WriteLine($"{dish.Name} - {dish.Price} руб.");
-            }
+        
         
     
 
@@ -479,14 +494,38 @@ public class Menu : IShow
         Array.Sort(dishes, (d1, d2) => d1.Menu_Sec_ID.CompareTo(d2.Menu_Sec_ID));
         return dishes;
     }
-
     public void Show(Dish[] dishes)
     {
-        foreach (var dish in dishes)
+        // Sorting dishes by menu section
+        var groupedDishes = dishes
+            .Where(d => d.Is_Available)
+            .GroupBy(d => d.Menu_Section);
+
+        foreach (var section in groupedDishes)
         {
-            Console.WriteLine($"ID: {dish.Dish_ID}, Name: {dish.Name}, Price: {dish.Price}, Available: {dish.Is_Available}");
+            Console.WriteLine($"Menu Section: {section.Key}");
+
+            foreach (var dish in section)
+            {
+                Console.WriteLine($"\tID: {dish.Dish_ID},\t Name: {dish.Name},\t Price: {dish.Price}");
+            }
+
+            Console.WriteLine(); // Empty line for separating sections
         }
     }
+
+
+
+    //public void Show(Dish[] dishes)
+    //{
+    //    foreach (var dish in dishes)
+    //    {
+    //        if (dish.Is_Available)
+    //        {
+    //            Console.WriteLine($"ID: {dish.Dish_ID},\t Name: {dish.Name},\t Price: {dish.Price}");
+    //        }
+    //    }
+    //}
 }
 public class OrderShow : IShow
 {
@@ -501,13 +540,7 @@ public class OrderShow : IShow
     {
         foreach (var dish in dishes)
         {
-            
             Console.WriteLine($"ORDER - ID: {dish.Dish_ID}, Name: {dish.Name}, Price: {dish.Price}");
-            
         }
-    }
-    public void Show(int[] orderIds)
-    {
-        // Реализация Show для int[]
     }
 }
