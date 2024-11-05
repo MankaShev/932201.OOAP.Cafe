@@ -13,7 +13,7 @@ class MainReturnValTest
         Controller controller = kitchen.controller;//вытаскивание контролера с кухней внутри
         //надо будет ещё в кухню добавить контроллер, т.к. она должна будет его вызывать, когда заказ будет готов
 
-        Console.WriteLine("Welcome to our Onlne book&order service 'Goida'!!!\n");
+        Console.WriteLine("\nWelcome to our Onlne book&order service 'Goida'!!!\n");
         Console.WriteLine("Please sign in or create an account:\n");
 
         //пользователь создаёт себе аккаунт или выбирает из БД в контроллере и помещает в переменную
@@ -146,7 +146,7 @@ public class Table
     {
         if (!Is_Booked)
         {
-            Console.WriteLine("Table " + Table_ID + " " + "is free for " + Capacity + " people" + "\n");
+            Console.WriteLine("Table " + Table_ID + " " + "is free for " + Capacity + " people");
         }
     }
 }
@@ -270,8 +270,14 @@ public class Controller
         //потом вызов метода у кухни k{поле объекта} для расчёта времени готовки заказа
         int t = k.Count_Order_Time(order);
 
-        //Выводим составленный заказ
-        
+        Dish[] dishes = new Dish[dishes_number.Length];
+        for (int i = 0; i < dishes_number.Length; i++)
+        {
+            dishes[i]=data.dishes[dishes_number[i]];
+        }
+
+         //Выводим составленный заказ
+
 
         Console.WriteLine("Time of your order = " + t);
 
