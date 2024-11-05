@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
 
-
-// Save this program as MainReturnValTest.cs.
 class MainReturnValTest
 {
     static int Main()//то с чего начинается программа 
@@ -16,7 +14,7 @@ class MainReturnValTest
 
         //пользователь создаёт себе аккаунт или выбирает из БД в контроллере и помещает в переменную
         int ourVisitor = 2;
-        Console.WriteLine("Nice to see you again,"+controller.data.visitors[ourVisitor].FIO+"\n");
+        Console.WriteLine("Nice to see you again," + controller.data.visitors[ourVisitor].FIO + "\n");
 
         Console.WriteLine("Choose your table:\n");
 
@@ -25,7 +23,7 @@ class MainReturnValTest
 
         //пользователь выбирает столик и помещает в переменную
         int choosenTable = int.Parse(Console.ReadLine());
-        
+
         // Говорим интерфейсу, что он сейчас выводит Menu
         inter = new Menu();
         Console.WriteLine($"\tMenu: ");
@@ -39,7 +37,7 @@ class MainReturnValTest
         do_order = controller.Create_Order(choosenTable, choosenDishes, ourVisitor, inter); //создается заказ и идёт обращение к кухне, возврат времени готовки+вывод на экран
         //возвращает номер сформированного заказа
 
-        if (do_order!=0)
+        if (do_order != 0)
         {
             kitchen.SetTimer(do_order); // "Установка таймера" на кухне и его мгновенное срабатывание
         }
@@ -167,7 +165,7 @@ public class Kitchen
         controller = new Controller(this); //контроллер для кухни, который будет к ней привязан
     }
 
-    
+
     //так же отдельно метод для установки загруженности
     public void SetWorkload(int wl)
     {
@@ -201,7 +199,7 @@ public class Kitchen
     //Установка таймера
     public void SetTimer(int orID)
     {
-        controller.data.orders.ElementAt(orID).Is_Ready =true; //меняем статус заказа в БД
+        controller.data.orders.ElementAt(orID).Is_Ready = true; //меняем статус заказа в БД
         controller.Order_is_ready(orID); //выыодим
     }
 }
@@ -233,7 +231,7 @@ public class Order
         Table_ID = table_id;
         Visitor_ID = visitor_id;
         Is_Ready = false;
-        Dish_List= dish_ids;
+        Dish_List = dish_ids;
     }
 
 }
@@ -244,7 +242,7 @@ public class Controller
 {
     public Kitchen k; //кухня, к которой он привязан
     public DataBase data = new DataBase(); //база данных для контроллера
-    
+
     //конструктор с кухней
     public Controller(Kitchen kit)
     {
@@ -271,7 +269,7 @@ public class Controller
 
         //Выводим составленный список блюд в заказе
         inter = new OrderShow();
-        dishes=inter.Sorted(dishes);
+        dishes = inter.Sorted(dishes);
         Console.WriteLine($"ORDER - ID: {order.Order_ID}");
         inter.Show(dishes);
 
@@ -298,7 +296,7 @@ public class Controller
 
             return order.Order_ID;
         }
-        else { return 0;}
+        else { return 0; }
     }
     //для подсчёта итогового чека
     public double Get_Chek(int[] dishes_number)
@@ -310,10 +308,10 @@ public class Controller
         }
         return chek;
     }
-    
-    public void Order_is_ready(int order) 
+
+    public void Order_is_ready(int order)
     {
-        Console.WriteLine("Order №"+ order+" is ready!");
+        Console.WriteLine("Order №" + order + " is ready!");
     }
 }
 
@@ -359,7 +357,7 @@ public class DataBase
         locations[0] = "cafe";
         locations[1] = "outside";
 
-        
+
 
 
         // Заполнение массива блюдами
@@ -374,9 +372,9 @@ public class DataBase
         dishes[8] = new Dish(9, "greek salad", 240.0, "salads", 10);
         dishes[9] = new Dish(10, "chicken broth", 140.0, "soups", 40);
 
-        
-        
-    
+
+
+
 
         #endregion
 
@@ -390,7 +388,7 @@ public class DataBase
             //Console.WriteLine("Table " + i + " " + tables.ElementAt(i).Is_Booked);
         }
     }
- public void show_tables()//вывод свободных столиков из БД
+    public void show_tables()//вывод свободных столиков из БД
     {
         for (int i = 0; i < n; i++)
         {
@@ -440,19 +438,6 @@ public class Menu : IShow
             Console.WriteLine(); // Empty line for separating sections
         }
     }
-
-
-
-    //public void Show(Dish[] dishes)
-    //{
-    //    foreach (var dish in dishes)
-    //    {
-    //        if (dish.Is_Available)
-    //        {
-    //            Console.WriteLine($"ID: {dish.Dish_ID},\t Name: {dish.Name},\t Price: {dish.Price}");
-    //        }
-    //    }
-    //}
 }
 public class OrderShow : IShow
 {
@@ -464,7 +449,7 @@ public class OrderShow : IShow
     }
 
     public void Show(Dish[] dishes)
-    {        
+    {
         // Sorting dishes by menu section
         var groupedDishes = dishes
             .Where(d => d.Is_Available)
